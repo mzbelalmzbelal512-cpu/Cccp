@@ -1,40 +1,22 @@
 module.exports.config = {
-  name: "newbox",
-  version: "1.0.0",
-  hasPermssion: 1,
-  credits: "SHAHADAT SAHU",
-  description: "Create a new chat group with mentioned users",
-  commandCategory: "Group",
-  usages: "newbox @tag | Group Name",
-  cooldowns: 0,
-  usePrefix: true
+	name: "newbox",	
+	version: "1.0.0", 
+	hasPermssion: 2,
+	credits: "NTKhang",
+	description: "Create a new chat group with the tag", 
+ commandCategory: "Box Chat",
+	usages: '"$newbox [tag] | [New group name] or "$newbox me [tag] | [New group name]"',
+	cooldowns: 5, 
+	dependencies: "",
 };
 
-module.exports.run = async function ({ api, event }) {
-  const sender = event.senderID;
-  const mentions = Object.keys(event.mentions);
-  const body = event.body;
-
-  if (!body.includes("|")) {
-    return api.sendMessage(
-      "Usage: newbox @tag1 @tag2 & Group Name",
-      event.threadID,
-      event.messageID
-    );
-  }
-
-  const groupName = body.split("|")[1].trim();
-
-  let members = [sender];
-
-  for (let id of mentions) {
-    if (!members.includes(id)) members.push(id);
-  }
-
-  api.createNewGroup(members, groupName, () => {
-    api.sendMessage(
-      `Group created successfully: ${groupName}`,
-      event.threadID
-    );
-  });
-};
+module.exports.run = async function({ api, Users, args, event }) {
+ if (args[0] == "me")
+ var id = [event.senderID]
+ else id = [];
+ var main = event.body; 
+ var groupTitle = main.slice(main.indexOf("|") +2)
+ for (var i = 0; i < Object.keys(event.mentions).length; i++)
+id.push(Object.keys(event.mentions)[i]);
+ api.createNewGroup(id, groupTitle,() => {api.sendMessage(`Has created a group ${groupTitle} success`, event.threadID)})
+}

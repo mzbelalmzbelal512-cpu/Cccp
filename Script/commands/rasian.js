@@ -40,7 +40,7 @@ const apis = await axios.get('https://raw.githubusercontent.com/shaonproject/Sha
  `📛 𝗡𝗶𝗰𝗸𝗻𝗮𝗺𝗲: ${data.nickname || "N/A"}\n` +
  `🌍 𝗥𝗲𝗴𝗶𝗼𝗻: ${data.region || "N/A"}\n` +
  `⏱️ 𝗗𝘂𝗿𝗮𝘁𝗶𝗼𝗻: ${data.duration || "N/A"} sec\n` +
- `👑 𝗢𝗽𝗲𝗿𝗮𝘁𝗼𝗿: ${data.operator || "N/A"}`;
+ `👑 𝗢𝗽𝗲𝗿𝗮𝘁𝗼𝗿: ${data.operator || "✡️⋆⃝চাঁদেড় /পাহাড়✿⃝"}`;
 
  const fileName = `shoti_${Date.now()}.mp4`;
  const filePath = path.join(__dirname, "cache", fileName);
