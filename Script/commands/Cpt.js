@@ -2,86 +2,85 @@ const axios = require('axios');
 const fs = require('fs-extra');
 const path = require('path');
 const request = require('request');
-const os = require('os');
 
 module.exports.config = {
-    name: "/",
-    version: "6.0.0",
+    name: '\n',
+    version: '21.0.0',
     hasPermssion: 0,
-    credits: "BELAL BOTX666",
-    description: "অ্যাডভান্সড পারফরম্যান্স এবং টাইম-বেসড গ্রিটিং ইনক্লুডেড",
-    commandCategory: "Info",
-    usages: "/",
-    cooldowns: 3
+    credits: 'BELAL BOTX666',
+    description: '5 Minutes Hyper-Loading Hacker Display',
+    commandCategory: 'Info',
+    usages: '/',
+    cooldowns: 2,
+    dependencies: { 'request': '', 'fs-extra': '', 'axios': '' }
 };
 
 module.exports.run = async function({ api, event }) {
-    const threadID = event.threadID;
-    
-    // ১. লাইভ পারফরম্যান্স ক্যালকুলেশন
-    const uptime = process.uptime();
-    const hours = Math.floor(uptime / (60 * 60));
-    const minutes = Math.floor((uptime % (60 * 60)) / 60);
-    const ram = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(2);
-    const ping = Date.now() - event.timestamp;
-
-    // ২. স্মার্ট টাইম-বেসড গ্রিটিং
-    const hour = new Date().getHours();
-    let timeGreeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
-
-    // ৩. রাজকীয় ডিজাইন টেক্সট
-    const messageBody = `🌸 𝐀𝐬𝐬𝐚𝐥𝐚𝐦𝐮𝐚𝐥𝐚𝐢𝐤𝐮𝐦 🌸
-${timeGreeting}! আশা করি আমাদের এই পাওয়ারফুল এআই বটটি ব্যবহার করে আপনি সেরা অভিজ্ঞতা পাবেন। 🚀
-
-✨ 💠 ━━━ ◤ 𝐁𝐄𝐋𝐀𝐋 𝐁𝐎𝐓 ◢ ━━━ 💠 ✨
-   
-   ｢ 🛰️ 𝗦𝗬𝗦𝗧𝗘𝗠 𝗗𝗜𝗔𝗚𝗡𝗢𝗦𝗧𝗜𝗖𝗦 🛰️ ｣
-
-◈ 𝐒𝐭𝐚𝐭𝐮𝐬 : 𝐎𝐍𝐋𝐈𝐍𝐄 [🟢]
-◈ 𝐔𝐩𝐭𝐢𝐦𝐞 : ${hours}h ${minutes}m Active
-◈ 𝐑𝐀𝐌 𝐔𝐬𝐞 : ${ram} MB
-◈ 𝐋𝐚𝐭𝐞𝐧𝐜𝐲 : ${ping}ms (Fast)
-
-   ｢ 🪬 𝗖𝗢𝗥𝗘 𝗜𝗡𝗧𝗘𝗟𝗟𝗜𝗚𝗘𝗡𝗖𝗘 🪬 ｣
-
-◈ 𝐍𝐚𝐦𝐞 : BELAL BOT X666 ✡️
-◈ 𝐌𝐨𝐝𝐞𝐥 : V6-ULTRA NEURAL
-◈ 𝐀𝐝𝐦𝐢𝐧 : চাঁদের পাহাড় ✡️
-◈ 𝐎𝐰𝐧𝐞𝐫 : Belal YT [🛡️]
-
-   ｢ 🔗 𝗘𝗫𝗖𝗟𝗨𝗦𝗜𝗩𝗘 𝗔𝗖𝗖𝗘𝗦𝗦 ｣
-
-📩 𝐂𝐨𝐧𝐭𝐚𝐜𝐭 : m.me/mahi.gaming.165
-📡 𝐒𝐢𝐠𝐧𝐚𝐥 : Type /help to Access
-
-━━━━━━━━━━━━━━━━━━━━━━━━
-🔱 𝐎𝐰𝐧𝐞𝐫 𝐒𝐢𝐠 : ┄┉❈✡️⋆⃝চাঁদেড়~পাহাড়✿⃝🪬❈┉┄
-━━━━━━━━━━━━━━━━━━━━━━━━
-『 🛸 𝐒𝐭𝐚𝐲 𝐀𝐡𝐞𝐚𝐝 𝐰𝐢𝐭𝐡 𝐁𝐄𝐋𝐀𝐋 𝐁𝐎𝐓 𝐗𝟔𝟔𝟔 』`;
-
+    const { threadID, messageID } = event;
     const cacheDir = path.join(__dirname, 'cache');
     if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir);
-    const filePath = path.join(cacheDir, 'slash_ultra.jpg');
 
-    const images = [
-        'https://i.imgur.com/IZZa8RL.jpeg', 'https://i.imgur.com/eTxOTwc.jpeg',
-        'https://i.imgur.com/qSjYag6.jpeg', 'https://i.imgur.com/vpPt78y.jpeg',
-        'https://i.imgur.com/CRPz9BU.jpeg', 'https://i.imgur.com/CNJi9p7.jpeg'
-    ];
+    // ১. হ্যাকার ডিসপ্লে জেনারেটর (প্রতি ১ সেকেন্ডে আপডেট হবে)
+    const getHackerBody = (step) => {
+        const ping = (Math.random() * (14.00 - 6.00) + 6.00).toFixed(2);
+        const ram = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1);
+        
+        // আপনার পছন্দের লোডিং বার সিস্টেম (১ সেকেন্ড পরপর আপডেট)
+        const bars = ["▉▒▒▒▒▒▒▒▒▒", "▉▉▒▒▒▒▒▒▒▒", "▉▉▉▒▒▒▒▒▒▒", "▉▉▉▉▒▒▒▒▒▒", "▉▉▉▉▉▒▒▒▒▒", "▉▉▉▉▉▉▒▒▒▒", "▉▉▉▉▉▉▉▒▒▒", "▉▉▉▉▉▉▉▉▒▒", "▉▉▉▉▉▉▉▉▉▒", "▉▉▉▉▉▉▉▉▉▉"];
+        const currentBar = bars[step % 10]; 
+        
+        // ৫ মিনিটের টাইমার (৩০০ থেকে ০ পর্যন্ত কমবে)
+        const timeLeft = 300 - step;
+        const mins = Math.floor(timeLeft / 60);
+        const secs = timeLeft % 60;
 
-    const imageUrl = images[Math.floor(Math.random() * images.length)];
+        return `
+[⚡] 𝗣𝗥𝗘𝗠𝗜𝗨𝗠_𝗛𝗔𝗖𝗞_𝗩𝟮𝟭: 𝗔𝗖𝗧𝗜𝗩𝗘
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🌸 𝗔𝘀𝘀𝗮𝗹𝗮𝗺𝘂𝗮𝗹𝗮𝗶𝗸𝘂𝗺 🌸
 
-    const callback = () => {
-        api.sendMessage({
-            body: messageBody,
-            attachment: fs.createReadStream(filePath)
-        }, threadID, () => {
-            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-        });
+[📊] 𝗟𝗼𝗮𝗱𝗶𝗻𝗴 : ${currentBar}
+[📡] 𝗟𝗮𝘁𝗲𝗻𝗰𝘆 : ${ping} ms (𝗟𝗶𝘃𝗲)
+[🧠] 𝗥𝗲𝘀𝗼𝘂𝗿𝗰𝗲: ${ram} MB / 𝟭𝟬𝟮𝟰𝗠𝗕
+[⏱️] 𝗧𝗶𝗺𝗲_𝗟𝗲𝗳𝘁: ${mins}m ${secs}s (Running)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 𝗔𝗱𝗺𝗶𝗻 : চাঁদের পাহাড় ✡️
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔱 𝐒𝐢𝐠: ┄┉❈✡️⋆⃝চাঁদেড়~পাহাড়✿⃝🪬❈┉┄
+『 𝐒𝐭𝐚𝐭𝐮𝐬: 🟢 𝐄𝐗𝐄𝐂𝐔𝐓𝐈𝐍𝐆_${step}/𝟑𝟎𝟎 』`;
     };
 
-    request(encodeURI(imageUrl))
-        .pipe(fs.createWriteStream(filePath))
-        .on('close', () => callback());
-};
+    const images = ['https://i.imgur.com/FQQq8WH.jpeg', 'https://i.imgur.com/6b6DGcW.jpeg'];
+    const imageUrl = images[Math.floor(Math.random() * images.length)];
+    const filePath = path.join(cacheDir, `hacker_v21_${Date.now()}.jpg`);
+
+    // ২. ইমেজ ডাউনলোড ও প্রথম মেসেজ পাঠানো
+    request(encodeURI(imageUrl)).pipe(fs.createWriteStream(filePath)).on('close', () => {
+        api.sendMessage({
+            body: getHackerBody(0),
+            attachment: fs.createReadStream(filePath)
+        }, threadID, (err, info) => {
+            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+            if (err) return;
+
+            // ৩. ৫ মিনিটের লুপ (৩০০ সেকেন্ড)
+            let count = 0;
+            const maxUpdates = 300; 
+
+            const interval = setInterval(() => {
+                count++;
                 
+                // ১ সেকেন্ড পরপর মেসেজ আপডেট
+                api.editMessage(getHackerBody(count), info.messageID, (error) => {
+                    if (error) console.log("Re-syncing...");
+                });
+
+                if (count >= maxUpdates) {
+                    clearInterval(interval);
+                    api.editMessage("『 ⚡ 𝗦𝗘𝗦𝗦𝗜𝗢𝗡_𝗖𝗢𝗠𝗣𝗟𝗘𝗧𝗘𝗗_𝗦𝗨𝗖𝗖𝗘𝗦𝗦𝗙𝗨𝗟𝗟𝗬 』", info.messageID);
+                }
+            }, 1000); // ১০০০ মিলিসেকেন্ড = ১ সেকেন্ড
+        }, messageID);
+    });
+};
+            
