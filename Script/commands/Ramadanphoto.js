@@ -1,13 +1,14 @@
 const axios = require('axios');
 const fs = require('fs-extra');
 const path = require('path');
+const { createCanvas, loadImage, registerFont } = require('canvas');
 
 module.exports.config = {
   name: "ramadanphoto",
-  version: "8.0.0",
+  version: "15.0.0",
   hasPermssion: 0,
   credits: "Belal x Gemini",
-  description: "সুন্দর রমজান উইশিং কার্ড তৈরি করুন (নো সার্ভার বিজি ইস্যু)",
+  description: "বটের নিজস্ব সার্ভারে রাজকীয় রমজান কার্ড তৈরি",
   commandCategory: "graphics",
   usages: "[@মেনশন / নাম]",
   cooldowns: 10
@@ -15,56 +16,67 @@ module.exports.config = {
 
 module.exports.run = async function ({ api, event, args }) {
   const { threadID, messageID, senderID, mentions } = event;
+  const cachePath = path.join(__dirname, 'cache', `ramadan_card_${senderID}.png`);
 
   try {
-    let targetName;
-    let targetID; // আইডি শুধু মেসেজের জন্য, ছবিতে যাবে না
+    let targetID = Object.keys(mentions).length > 0 ? Object.keys(mentions)[0] : senderID;
+    const userInfo = await api.getUserInfo(targetID);
+    const targetName = args.join(" ") || userInfo[targetID].name;
 
-    // ১. টার্গেট নাম ডিটেকশন
-    if (Object.keys(mentions).length > 0) {
-      targetID = Object.keys(mentions)[0];
-      targetName = mentions[targetID].replace('@', ''); // মেনশন থেকে নাম
-    } else {
-      targetID = senderID;
-      const userInfo = await api.getUserInfo(targetID);
-      targetName = args.join(" ") || userInfo[targetID].name; // নিজের নাম বা দেওয়া নাম
-    }
+    api.sendMessage("⏳ বেলাল ভাই, আপনার রাজকীয় কার্ডটি তৈরি হচ্ছে...", threadID, messageID);
 
-    api.sendMessage(`⏳ ${targetName}-এর জন্য আপনার রাজকীয় রমজান শুভেচ্ছা কার্ডটি তৈরি হচ্ছে...`, threadID, messageID);
+    // ১. ক্যানভাস সাইজ নির্ধারণ
+    const canvas = createCanvas(1000, 600);
+    const ctx = canvas.getContext('2d');
 
-    // ২. স্থিতিশীল টেক্সট-অন-ইমেজ এপিআই ব্যবহার (কোনো প্রোফাইল পিকচার আপলোড ছাড়াই)
-    // এটি একটি নির্ভরযোগ্য টেক্সট এডিটর এপিআই যা একটি প্রি-ডিজাইনড টেমপ্লেটে নাম বসায়।
-    const imageUrl = `https://api.popcat.xyz/ramadan?text=${encodeURIComponent(targetName)}`;
+    // ২. ব্যাকগ্রাউন্ড ইমেজ (একটি স্থায়ী রমজান ব্যাকগ্রাউন্ড লিঙ্ক)
+    const backgroundUrl = "https://i.imgur.com/KndNQ0w.jpeg"; 
+    const background = await loadImage(backgroundUrl);
+    ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
+
+    // ৩. ইউজারের প্রোফাইল পিকচার বসানো
+    const profilePicUrl = `https://graph.facebook.com/${targetID}/picture?width=512&height=512&access_token=6628568379|c1e620fa708a1d5696fb991c1bde5662`;
+    const avatar = await loadImage(profilePicUrl);
     
-    // বিকল্প এপিআই (যদি Popcat ডাউন থাকে) - এটা টেক্সটপ্রো স্টাইল
-    const backupUrl = `https://textpro.me/generate-luxury-gold-text-effect-online-free-1049.html?text=${encodeURIComponent(targetName)}`; // এই এপিআই সরাসরি ইমেজ দেয় না, তাই একটু ট্রিক লাগবে।
-    // যেহেতু TextPro সরাসরি ইমেজ ইউআরএল দেয় না, আমি এখানে একটি জেনেরিক ফিক্সড রমজান কার্ডের URL ব্যবহার করছি।
-    const genericRamadanCardUrl = "https://i.imgur.com/KndNQ0w.jpeg"; // একটি কমন রমজান কার্ড
+    // প্রোফাইল পিকচারটি গোল করার ডিজাইন
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(500, 200, 100, 0, Math.PI * 2, true);
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(avatar, 400, 100, 200, 200);
+    ctx.restore();
 
-    const imagePath = path.join(__dirname, 'cache', `ramadan_card_${senderID}.png`);
+    // ৪. টেক্সট ডিজাইন (নাম ও উইশ)
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
     
-    let response;
-    try {
-        response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-        fs.writeFileSync(imagePath, Buffer.from(response.data, 'utf-8'));
-    } catch (e) {
-        // যদি Popcat কাজ না করে, তবে একটি ডিফল্ট কার্ডে নাম লিখে পাঠানোর চেষ্টা
-        // এটি একটু জটিল, তাই সহজভাবে একটি টেক্সট মেসেজ সহ ডিফল্ট ইমেজ পাঠাবো
-        api.sendMessage(`⚠️ ইমেজ জেনারেটর সার্ভার এই মুহূর্তে বিজি। ${targetName}-এর জন্য একটি টেক্সট-কার্ড তৈরি করছি...`, threadID, messageID);
-        return api.sendMessage(`🌙 ✨ **${targetName}** কে জানাই **RAMADAN MUBARAK**! ✨ 🌙\n\nআল্লাহ আপনার রোজা কবুল করুন।\n\n✡️⃝🅰🅳🅼🅸🇳─͢͢চৃাঁদেৃঁরৃঁ পাৃঁহা্ঁড়ৃঁ✡️`, threadID, messageID);
-    }
+    // নাম
+    ctx.font = 'bold 50px Arial';
+    ctx.fillText(targetName, 500, 360);
+    
+    // রমজান উইশ
+    ctx.fillStyle = "#FFD700"; // সোনালী রঙ
+    ctx.font = '40px Arial';
+    ctx.fillText("RAMADAN MUBARAK", 500, 430);
+    
+    // আপনার সিগনেচার
+    ctx.fillStyle = "#ffffff";
+    ctx.font = '20px Arial';
+    ctx.fillText("Designed by Master Belal", 500, 550);
 
-    // ৩. ফাইনাল মেসেজ উইথ ডিটেইলস
-    const msg = `🌙 **RAMADAN MUBARAK** ${targetName}!\n\n✨ আপনার রমজান আনন্দময় হোক।\n\n✡️⃝🅰🅳🅼🅸🇳─͢͢চৃাঁদেৃঁরৃঁ পাৃঁহা্ঁড়ৃঁ✡️`;
+    // ৫. ইমেজ সেভ ও সেন্ড
+    const buffer = canvas.toBuffer('image/png');
+    fs.writeFileSync(cachePath, buffer);
 
     return api.sendMessage({
-      body: msg,
-      attachment: fs.createReadStream(imagePath)
-    }, threadID, () => fs.unlinkSync(imagePath), messageID);
+      body: `🌙 আসসালামু আলাইকুম ${targetName}!\nআপনার জন্য বিশেষ রমজান কার্ডটি তৈরি।`,
+      attachment: fs.createReadStream(cachePath)
+    }, threadID, () => fs.unlinkSync(cachePath), messageID);
 
   } catch (err) {
     console.error(err);
-    // চূড়ান্ত ফলব্যাক: যদি কিছুই কাজ না করে
-    return api.sendMessage(`❌ বেলাল ভাই, দুঃখিত! কোনো ইমেজ কার্ড তৈরি করতে পারছি না।\n\n🌙 ${targetName}-কে জানাই রমজান মুবারক!\n\n✡️⃝🅰🅳🅼🅸🇳─͢͢চৃাঁদেৃঁরৃঁ পাৃঁহা্ঁড়ৃঁ✡️`, threadID, messageID);
+    return api.sendMessage("❌ বেলাল ভাই, ক্যানভাস সিস্টেমে সমস্যা হচ্ছে। দয়া করে 'npm install canvas' করেছেন কি না চেক করুন।", threadID, messageID);
   }
 };
+      
