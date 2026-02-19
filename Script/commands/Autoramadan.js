@@ -1,5 +1,6 @@
 const { execSync } = require('child_process');
 
+// প্রয়োজনীয় প্যাকেজ চেক ও অটো-ইনস্টল
 try {
     require.resolve("canvas");
     require.resolve("axios");
@@ -17,38 +18,61 @@ const { createCanvas, loadImage } = require('canvas');
 
 module.exports.config = {
   name: "autoramadan",
-  version: "60.0.0",
+  version: "100.0.0",
   hasPermssion: 0,
   credits: "Belal x Gemini",
-  description: "৬০+ র্যান্ডম ক্যাপশন ও ডিটেইলস কার্ড",
+  description: "দেড় ঘণ্টা পর পর ৬০+ র্যান্ডম ক্যাপশন ও কার্ড গিফট",
   commandCategory: "system",
   usages: "",
   cooldowns: 10
 };
 
+// 🕒 সময় সেটিংস: ৯০ মিনিট (১ ঘণ্টা ৩০ মিনিট)
 const AUTO_TIME = 90 * 60 * 1000; 
 
 module.exports.onLoad = async function ({ api }) {
-    setInterval(async () => {
-        try {
-            const allThreads = await api.getThreadList(10, null, ["INBOX"]);
-            const groupThreads = allThreads.filter(t => t.isGroup && t.isSubscribed);
-            for (const thread of groupThreads) {
-                const threadID = thread.threadID;
-                const threadInfo = await api.getThreadInfo(threadID);
-                const participantIDs = threadInfo.participantIDs;
-                const randomID = participantIDs[Math.floor(Math.random() * participantIDs.length)];
-                await generateAndSendCard(api, threadID, randomID);
-                await new Promise(resolve => setTimeout(resolve, 3000));
+    console.log("🚀 [AUTORAMADAN] সিস্টেম সাকসেসফুলি স্টার্ট হয়েছে!");
+    console.log("⏰ পরবর্তী কার্ড ঠিক ৯০ মিনিট পর পাঠানো হবে।");
+
+    // অটোমেটিক লুপ ফাংশন
+    const startLoop = () => {
+        setTimeout(async () => {
+            try {
+                // ইনবক্স থেকে গ্রুপের লিস্ট নেওয়া
+                const allThreads = await api.getThreadList(20, null, ["INBOX"]);
+                const groupThreads = allThreads.filter(t => t.isGroup && t.isSubscribed);
+
+                for (const thread of groupThreads) {
+                    const threadID = thread.threadID;
+                    
+                    // গ্রুপের মেম্বার লিস্ট থেকে র্যান্ডম একজনকে বেছে নেওয়া
+                    const threadInfo = await api.getThreadInfo(threadID);
+                    const participantIDs = threadInfo.participantIDs;
+                    const randomID = participantIDs[Math.floor(Math.random() * participantIDs.length)];
+                    
+                    // কার্ড তৈরি ও পাঠানো
+                    await generateAndSendCard(api, threadID, randomID);
+                    
+                    // স্প্যাম প্রোটেকশন: প্রতি গ্রুপের মাঝে ৫ সেকেন্ড গ্যাপ
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                }
+            } catch (err) {
+                console.log("❌ Auto Loop Error: ", err);
             }
-        } catch (err) { console.log(err); }
-    }, AUTO_TIME);
+            // লুপটি আবার চালু করা
+            startLoop();
+        }, AUTO_TIME);
+    };
+
+    // বট চালু হওয়ার ৫ সেকেন্ড পর প্রথম লুপ কাউন্টডাউন শুরু হবে
+    startLoop();
 };
 
 async function generateAndSendCard(api, threadID, targetID) {
     const cachePath = path.join(__dirname, 'cache', `auto_ramadan_${targetID}.png`);
     try {
         if (!fs.existsSync(path.join(__dirname, 'cache'))) fs.mkdirSync(path.join(__dirname, 'cache'));
+        
         const userInfo = await api.getUserInfo(targetID);
         const user = userInfo[targetID];
         if (!user) return;
@@ -92,9 +116,9 @@ async function generateAndSendCard(api, threadID, targetID) {
         const buffer = canvas.toBuffer('image/png');
         fs.writeFileSync(cachePath, buffer);
 
+        // ঈদ কাউন্টডাউন
         const eidDate = moment.tz("2026-03-20 06:00", "Asia/Dhaka");
-        const now = moment.tz("Asia/Dhaka");
-        const diff = moment.duration(eidDate.diff(now));
+        const diff = moment.duration(eidDate.diff(moment.tz("Asia/Dhaka")));
         const countdown = `${diff.days()} দিন ${diff.hours()} ঘণ্টা বাকি`;
 
         const captions = [
@@ -154,10 +178,10 @@ async function generateAndSendCard(api, threadID, targetID) {
             `আপনার ঈমান হোক পাহাড়ের মতো অটল। @${targetName} ⛰️`,
             `রমজানের শেষ দিনেও যেন ইবাদত বজায় থাকে। @${targetName} ⏳`,
             `ঈদের চাঁদ দেখা দিক আপনার সুখের খবর নিয়ে। @${targetName} 🌙`,
-            `খুশির এই দিনে আপনার মুখে হাসি থাকুক। @${targetName} 😊`,
-            `আল্লাহর বিশেষ রহমত আপনার পরিবারের উপর থাকুক। @${targetName} 👨‍👩‍👧‍👦`,
-            `পবিত্র মাহে রমজান আপনার জীবন বদলে দিক। @${targetName} ✨`,
-            `মাস্টার বেলাল আপনার জন্য শুভকামনা করছে। @${targetName} 🛰️`
+            `খুশির এই দিনে আপনার মুখে হাসি থাকুক। 😊`,
+            `আল্লাহর বিশেষ রহমত আপনার পরিবারের উপর থাকুক। 👨‍👩‍👧‍👦`,
+            `পবিত্র মাহে রমজান আপনার জীবন বদলে দিক। ✨`,
+            `মাস্টার বেলাল আপনার জন্য শুভকামনা করছে। 🛰️`
         ];
         const randomCaption = captions[Math.floor(Math.random() * captions.length)];
 
@@ -172,7 +196,8 @@ async function generateAndSendCard(api, threadID, targetID) {
 }
 
 module.exports.run = async function ({ api, event, args }) {
-    const { threadID, messageID, senderID, mentions } = event;
+    const { threadID, senderID, mentions } = event;
     let targetID = Object.keys(mentions).length > 0 ? Object.keys(mentions)[0] : senderID;
     await generateAndSendCard(api, threadID, targetID);
 };
+            
