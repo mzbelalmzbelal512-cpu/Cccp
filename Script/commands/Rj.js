@@ -6,63 +6,59 @@ const path = require('path');
 
 module.exports.config = {
   name: "rj",
-  version: "1200.0.0",
+  version: "20.0.0",
   hasPermssion: 0,
   credits: "Belal x Gemini",
-  description: "মাস্টার বেলাল: অল-ইন-ওয়ান প্রিমিয়াম অটো-ইমেজ",
+  description: "নির্দিষ্ট ইমেজের ওপর লাইভ ডাটা শো করার মাস্টার ফাইল",
   commandCategory: "system",
   usages: "/rj",
   cooldowns: 5
 };
 
-async function createPremiumImage(api, threadID = null) {
+async function sendMasterUpdate(api, threadID = null) {
   const cachePath = path.join(__dirname, 'cache', `belal_final_${Date.now()}.png`);
   try {
     const now = moment().tz('Asia/Dhaka');
     const time = now.format('hh:mm A');
-    const date = now.format('DD MMMM, YYYY');
-    const hour = now.hour();
+    const date = now.format('DD MMM, YYYY');
 
-    // ১. ৫টি শহরের ডাটা সংগ্রহ
-    const cities = ["Kurigram", "Rangpur", "Dhaka", "Sirajganj", "Sylhet"];
-    let cityRows = "";
-    for (const city of cities) {
+    // ১. কুড়িগ্রাম, রৌমারী ও সিরাজগঞ্জের ডাটা সংগ্রহ
+    const locations = ["Kurigram", "Sirajganj"];
+    let stats = "";
+    for (const city of locations) {
       try {
         const res = await axios.get(`https://api.aladhan.com/v1/timingsByCity?city=${city}&country=Bangladesh&method=2`);
         const t = res.data.data.timings;
-        cityRows += `${city}: Fajr ${t.Fajr} | Maghrib ${t.Maghrib} <br>`;
-      } catch (e) { cityRows += `${city}: Updating... <br>`; }
+        stats += `${city}: S-${t.Fajr} I-${t.Maghrib} | `;
+      } catch (e) { stats += `${city}: Sync | `; }
     }
 
-    // ২. হাই-কোয়ালিটি গ্রাফিক্স রেন্ডারিং (সবকিছু ছবির ভেতরে)
-    const title = "MASTER BELAL DIGITAL HUB";
-    const sig = "Chander Pahar Ultra-Net";
-    const bgColor = hour >= 18 || hour <= 5 ? "linear-gradient(135deg, #0f2027, #203a43, #2c5364)" : "linear-gradient(135deg, #f2994a, #f2c94c)";
+    // ২. আপনার দেওয়া ইমেজকে বেইজ হিসেবে ব্যবহার (Imgur Link)
+    const baseImage = "https://i.imgur.com/KndNQ0w.jpeg";
+    
+    // ছবির ওপর লেখা বসানোর জন্য ডাইনামিক এপিআই
+    // এখানে আপনার নাম, সময় এবং শহরের ডাটা ইমেজের ওপর লেয়ার হিসেবে বসবে
+    const title = encodeURIComponent("👑 MASTER BELAL HUB 👑");
+    const info = encodeURIComponent(`Date: ${date} | Time: ${time}\n${stats}\nRowmari: Same as Kurigram`);
 
-    // ছবির ভেতরে সুন্দরভাবে সাজানোর জন্য HTML লজিক
-    const htmlContent = `
-    <div style="width: 800px; height: 500px; background: ${bgColor}; color: white; padding: 40px; font-family: Arial; border: 10px solid gold; box-sizing: border-box; text-align: center;">
-      <h1 style="font-size: 45px; margin: 0; color: #fff; text-shadow: 2px 2px 5px black;">👑 ${title} 👑</h1>
-      <h2 style="font-size: 25px; margin: 15px 0; border-bottom: 2px solid white; display: inline-block;">📅 ${date} | 🕒 ${time}</h2>
-      <div style="text-align: left; margin: 20px auto; width: 80%; font-size: 22px; line-height: 1.6; background: rgba(0,0,0,0.3); padding: 20px; border-radius: 15px;">
-        ${cityRows}
-      </div>
-      <p style="font-size: 20px; font-style: italic; margin-top: 15px;">🪬 ${sig}</p>
-    </div>`.replace(/\n/g, "");
-
-    // এটি আপনার HTML-কে ছবিতে রূপান্তর করবে (কোনো মডিউল ছাড়াই)
-    const imageUrl = `https://api.screenshotmachine.com/?key=bc8930&dimension=800x500&format=png&cacheLimit=0&delay=200&url=data:text/html,${encodeURIComponent(htmlContent)}`;
+    // এটি একটি পাওয়ারফুল ইমেজ এপিআই যা আপনার লিঙ্কের ছবির ওপর লেখাগুলো বসিয়ে দিবে
+    const finalImageUrl = `https://api.memegen.link/images/custom/_/${title}.png?background=${baseImage}&font=titilliumweb-black&text0=${info}&text0_pos=middle`;
 
     if (!fs.existsSync(path.join(__dirname, 'cache'))) fs.mkdirSync(path.join(__dirname, 'cache'));
 
-    const response = await axios({ method: 'GET', url: imageUrl, responseType: 'stream' });
+    const response = await axios({
+      method: 'GET',
+      url: finalImageUrl,
+      responseType: 'stream'
+    });
+
     const writer = fs.createWriteStream(cachePath);
     response.data.pipe(writer);
 
     return new Promise((resolve) => {
       writer.on('finish', () => {
         const msg = {
-          body: `🌟 𝗨𝗟𝗧𝗥𝗔-𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗨𝗣𝗗𝗔𝗧𝗘 🛰️\nমাস্টার বেলাল এর ডিজিটাল আপডেট সফলভাবে তৈরি হয়েছে।`,
+          body: `🌟 𝗨𝗟𝗧𝗥𝗔-𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗟𝗜𝗩𝗘 𝗨𝗣𝗗𝗔𝗧𝗘 🛰️\n━━━━━━━━━━━━━━━━━━━━━━\nমাস্টার বেলাল এর ডিজিটাল ব্যানার সফলভাবে তৈরি হয়েছে।\n━━━━━━━━━━━━━━━━━━━━━━\n🪬 𝐂 𝐡 𝐚 𝐧 𝐝 𝐞 𝐫   𝐏 𝐚 𝐡 𝐚 𝐫`,
           attachment: fs.createReadStream(cachePath)
         };
 
@@ -85,7 +81,7 @@ async function createPremiumImage(api, threadID = null) {
 
   } catch (err) {
     console.error(err);
-    if (threadID) api.sendMessage("❌ গ্রাফিক্স তৈরিতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।", threadID);
+    if (threadID) api.sendMessage("❌ ছবি তৈরি করতে সমস্যা হয়েছে। দয়া করে আবার চেষ্টা করুন।", threadID);
   }
 }
 
@@ -93,10 +89,11 @@ module.exports.onLoad = async ({ api }) => {
   const rule = new schedule.RecurrenceRule();
   rule.tz = 'Asia/Dhaka';
   rule.minute = 0; 
-  schedule.scheduleJob(rule, () => createPremiumImage(api));
+  schedule.scheduleJob(rule, () => sendMasterUpdate(api));
 };
 
 module.exports.run = async ({ api, event }) => {
-  api.sendMessage("⌛ মাস্টার বেলাল, আপনার অল-ইন-ওয়ান ডিজিটাল কার্ডটি তৈরি হচ্ছে...", event.threadID);
-  await createPremiumImage(api, event.threadID);
+  api.sendMessage("⌛ মাস্টার বেলাল, আপনার দেওয়া ইমেজের ওপর লাইভ ডাটা বসানো হচ্ছে...", event.threadID);
+  await sendMasterUpdate(api, event.threadID);
 };
+    
